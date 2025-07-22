@@ -1,7 +1,17 @@
 {
-  "name": "hardhat-project",
+  "name": "zephex-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for Zephex encrypted messaging",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:sepolia": "npx hardhat run scripts/deploy-messaging.ts --network sepolia",
+    "verify:sepolia": "npx hardhat verify --network sepolia",
+    "clean": "npx hardhat clean"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "dotenv": "^17.2.0",
     "hardhat": "^2.26.1"
   }
 }
