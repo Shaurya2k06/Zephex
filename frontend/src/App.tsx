@@ -4,6 +4,8 @@ import { MessageProvider, useMessages } from './contexts/MessageContext'
 import { useWalletBalance, useWalletOperations } from './hooks/useWalletBalance'
 import { ComicText } from './components/magicui/comic-text'
 import { DotPattern } from './components/magicui/dot-pattern'
+import { LandingScreen } from './components/LandingScreen'
+import { ZephexLogo } from './components/ui/ZephexLogo'
 import './App.css'
 
 // Comic Loading Spinner Component
@@ -37,11 +39,18 @@ function WalletConnect() {
             <div className="absolute -bottom-3 -left-2 w-5 h-5 bg-blue-400 rounded-full border-2 border-black animate-bounce" style={{ animationDelay: '1s' }}></div>
             
             <div className="mb-8 text-center">
+              <div className="mb-4 flex justify-center">
+                <img 
+                  src="/Zephex.png" 
+                  alt="Zephex Logo" 
+                  className="w-16 h-16 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce"
+                />
+              </div>
               <ComicText fontSize={2.5} className="mb-4">
                 ZEPHEX!
               </ComicText>
               <div className="text-lg font-bold text-gray-700 transform -skew-x-12 bg-yellow-200 px-4 py-2 rounded-lg border-2 border-black animate-pulse-glow">
-                💬 Epic Messaging Platform! 💬
+                🎮 Epic Messaging Platform!
               </div>
             </div>                    <button
               onClick={connectWallet}
@@ -50,20 +59,20 @@ function WalletConnect() {
             >
               {isConnecting ? (
                 <span className="flex items-center justify-center gap-2">
-                  🔗 CONNECTING <ComicLoader />
+                  CONNECTING <ComicLoader />
                 </span>
               ) : (
-                '🦄 CONNECT METAMASK!'
+                'CONNECT METAMASK!'
               )}
             </button>
         
             {error && (
               <div className="mt-4 p-4 bg-red-100 border-4 border-red-500 rounded-2xl text-red-700 font-bold transform -skew-x-3 shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] animate-shake">
-                💥 OOPS! {error}
+                OOPS! {error}
               </div>
             )}        <div className="mt-6 text-center">
           <div className="inline-block bg-purple-200 px-4 py-2 rounded-xl border-2 border-purple-700 transform skew-x-6">
-            <span className="text-purple-800 font-bold text-sm">🚀 Ready to chat? Connect now!</span>
+            <span className="text-purple-800 font-bold text-sm">Ready to chat? Connect now!</span>
           </div>
         </div>
       </div>
@@ -121,9 +130,16 @@ function ChatWindow() {
       <div className="w-80 bg-white/90 backdrop-blur-sm border-r-4 border-black shadow-[8px_0px_0px_0px_rgba(0,0,0,1)] flex flex-col relative z-10">
         {/* Header */}
         <div className="p-4 bg-gradient-to-r from-yellow-300 to-orange-400 border-b-4 border-black flex items-center justify-between">
-          <ComicText fontSize={1.2} className="text-black">
-            ZEPHEX
-          </ComicText>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/Zephex.png" 
+              alt="Zephex Logo" 
+              className="w-8 h-8 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            />
+            <ComicText fontSize={1.2} className="text-black">
+              ZEPHEX
+            </ComicText>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowWallet(!showWallet)}
@@ -131,7 +147,7 @@ function ChatWindow() {
                 showWallet ? 'bg-green-300 text-green-800' : 'bg-blue-200 text-blue-800'
               }`}
             >
-              💰 WALLET
+              WALLET
             </button>
             <button
               onClick={() => {
@@ -140,7 +156,7 @@ function ChatWindow() {
               }}
               className="px-3 py-1 text-sm font-bold bg-red-300 text-red-800 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform hover:-translate-y-0.5 transition-all"
             >
-              🚪 EXIT
+               EXIT
             </button>
           </div>
         </div>
@@ -149,12 +165,12 @@ function ChatWindow() {
         {showWallet && (
           <div className="p-4 bg-gradient-to-r from-green-200 to-emerald-300 border-b-4 border-black">
             <div className="text-sm font-bold text-gray-800 mb-3 bg-white/70 px-3 py-2 rounded-lg border-2 border-black transform -skew-x-3">
-              💳 Balance: {balance.formatted} ETH
+               Balance: {balance.formatted} ETH
             </div>
             
             {walletError && (
               <div className="mb-3 p-3 bg-red-200 border-2 border-red-600 rounded-lg text-red-800 text-xs font-bold transform skew-x-3 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)]">
-                💥 ERROR: {walletError}
+                 ERROR: {walletError}
                 <button onClick={clearError} className="ml-2 bg-red-600 text-white px-2 py-1 rounded">✕</button>
               </div>
             )}
@@ -184,10 +200,10 @@ function ChatWindow() {
                 >
                   {isDepositing ? (
                     <span className="flex items-center gap-1">
-                      💸 <ComicLoader />
+                       <ComicLoader />
                     </span>
                   ) : (
-                    '💰 DEPOSIT!'
+                    'DEPOSIT'
                   )}
                 </button>
               </div>
@@ -215,10 +231,10 @@ function ChatWindow() {
                 >
                   {isWithdrawing ? (
                     <span className="flex items-center gap-1">
-                      🔄 <ComicLoader />
+                       <ComicLoader />
                     </span>
                   ) : (
-                    '🏦 WITHDRAW!'
+                    'WITHDRAW!'
                   )}
                 </button>
               </div>
@@ -240,7 +256,7 @@ function ChatWindow() {
               onClick={handleAddContact}
               className="px-4 py-2 bg-purple-400 text-purple-900 rounded-lg text-sm font-bold hover:bg-purple-500 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform hover:-translate-y-0.5 transition-all"
             >
-              ➕ ADD!
+               ADD!
             </button>
           </div>
         </div>
@@ -251,7 +267,7 @@ function ChatWindow() {
             <div className="p-6 text-center">
               <div className="bg-yellow-200 border-2 border-black rounded-xl p-4 transform -skew-x-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <div className="text-yellow-800 font-bold text-sm">
-                  💭 No conversations yet!
+                   No conversations yet!
                 </div>
                 <div className="text-yellow-700 text-xs mt-1">
                   Add a contact to start chatting! 🚀
@@ -273,7 +289,7 @@ function ChatWindow() {
                     👤 {contact.slice(0, 6)}...{contact.slice(-4)}
                   </div>
                   <div className="text-xs text-gray-600 mt-2 font-medium bg-gray-100/50 px-2 py-1 rounded border border-gray-400 truncate">
-                    💬 {lastMessage?.content || 'No messages yet'}
+                     {lastMessage?.content || 'No messages yet'}
                   </div>
                 </div>
               )
@@ -300,10 +316,10 @@ function ChatWindow() {
             <div className="p-4 bg-gradient-to-r from-cyan-300 to-blue-400 border-b-4 border-black">
               <div className="bg-white/90 p-3 rounded-xl border-2 border-black transform -skew-x-6 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 <div className="font-bold text-gray-900 text-lg">
-                  🎯 CHATTING WITH: {selectedContact.slice(0, 6)}...{selectedContact.slice(-4)}
+                   CHATTING WITH: {selectedContact.slice(0, 6)}...{selectedContact.slice(-4)}
                 </div>
                 <div className="text-sm text-gray-700 font-medium">
-                  📊 {conversations[selectedContact]?.length || 0} messages sent!
+                   {conversations[selectedContact]?.length || 0} messages sent!
                 </div>
               </div>
             </div>
@@ -328,7 +344,7 @@ function ChatWindow() {
                     <div className={`text-xs mt-1 font-medium ${
                       message.from === user?.address ? 'text-green-800' : 'text-purple-800'
                     }`}>
-                      ⏰ {new Date(message.timestamp * 1000).toLocaleTimeString()}
+                      {new Date(message.timestamp * 1000).toLocaleTimeString()}
                     </div>
                   </div>
                 </div>
@@ -353,10 +369,10 @@ function ChatWindow() {
                 >
                   {isSending ? (
                     <span className="flex items-center gap-2">
-                      🚀 SENDING <ComicLoader />
+                      SENDING <ComicLoader />
                     </span>
                   ) : (
-                    '💥 SEND!'
+                    ' SEND!'
                   )}
                 </button>
               </div>
@@ -365,13 +381,20 @@ function ChatWindow() {
         ) : (
           <div className="flex-1 flex items-center justify-center text-center">
             <div className="bg-white/90 p-8 rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform hover:scale-105 transition-transform">
+              <div className="mb-4 flex justify-center">
+                <img 
+                  src="/Zephex.png" 
+                  alt="Zephex Logo" 
+                  className="w-20 h-20 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce"
+                />
+              </div>
               <ComicText fontSize={1.5} className="mb-4">
                 WELCOME TO ZEPHEX!
               </ComicText>
               <div className="bg-gradient-to-r from-purple-200 to-pink-200 p-4 rounded-xl border-2 border-black transform -skew-x-6">
-                <div className="text-lg font-bold text-purple-800 mb-2">🎮 Ready to Chat?</div>
+                <div className="text-lg font-bold text-purple-800 mb-2"> Ready to Chat?</div>
                 <div className="text-sm font-medium text-purple-700">
-                  Select a conversation or add a new contact to start your epic messaging adventure! 🚀
+                  Select a conversation or add a new contact to start your epic messaging adventure! 
                 </div>
               </div>
             </div>
@@ -383,8 +406,66 @@ function ChatWindow() {
 }
 
 function AppContent() {
-  const { user } = useWallet()
+  const { user, connectWallet, isConnecting } = useWallet()
+  const [showLanding, setShowLanding] = useState(true)
 
+  // Handle get started button - directly connect wallet
+  const handleGetStarted = async () => {
+    setShowLanding(false)
+    try {
+      await connectWallet()
+    } catch (error) {
+      console.error('Failed to connect wallet:', error)
+      // If connection fails, show landing again
+      setShowLanding(true)
+    }
+  }
+
+  // Show landing screen first
+  if (showLanding) {
+    return <LandingScreen onGetStarted={handleGetStarted} />
+  }
+
+  // Show loading while connecting
+  if (isConnecting) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100 flex items-center justify-center relative overflow-hidden">
+        <DotPattern 
+          className="opacity-30" 
+          width={32} 
+          height={32} 
+          glow={true}
+        />
+        
+        <div className="bg-white p-8 rounded-3xl border-8 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md w-full relative z-10 text-center">
+          <div className="mb-6 flex justify-center">
+            <img 
+              src="/Zephex.png" 
+              alt="Zephex Logo" 
+              className="w-16 h-16 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-pulse"
+            />
+          </div>
+          <ComicText fontSize={2} className="mb-6">
+            CONNECTING...
+          </ComicText>
+          <div className="text-lg font-bold text-gray-700 mb-4">
+            Please check MetaMask and approve the connection!
+          </div>
+          <div className="flex justify-center">
+            <ComicLoader />
+          </div>
+          <button
+            onClick={() => setShowLanding(true)}
+            className="mt-4 px-4 py-2 text-sm bg-gray-300 text-gray-700 rounded-lg border-2 border-black font-bold hover:bg-gray-400"
+          >
+            Back to Landing
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Show chat if connected, otherwise show wallet connect
   if (!user?.isConnected) {
     return <WalletConnect />
   }

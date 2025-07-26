@@ -4,11 +4,11 @@ pragma solidity ^0.8.28;
 import "./WalletContract.sol";
 
 /**
- * @title MessagingContract
+ * @title MessagingContractV2
  * @dev Fully on-chain encrypted messaging system with in-built wallet
  * @notice This contract stores encrypted messages on-chain with end-to-end encryption
  */
-contract MessagingContract {
+contract MessagingContractV2 {
     // Events
     event MessageSent(
         address indexed from,
@@ -21,6 +21,26 @@ contract MessagingContract {
     event PublicKeyRegistered(
         address indexed user,
         string publicKey,
+        uint256 timestamp
+    );
+    
+    // Wallet events
+    event Deposit(
+        address indexed user,
+        uint256 amount,
+        uint256 timestamp
+    );
+    
+    event Withdrawal(
+        address indexed user,
+        uint256 amount,
+        uint256 timestamp
+    );
+    
+    event AutoPayment(
+        address indexed from,
+        address indexed to,
+        uint256 amount,
         uint256 timestamp
     );
 
@@ -141,6 +161,9 @@ contract MessagingContract {
             walletContract.deductPayment(msg.sender, MESSAGE_FEE), 
             "Insufficient wallet balance. Please deposit more ETH."
         );
+        
+        // Emit auto payment event
+        emit AutoPayment(msg.sender, _to, MESSAGE_FEE, block.timestamp);
 
         Message memory newMessage = Message({
             from: msg.sender,
@@ -195,6 +218,7 @@ contract MessagingContract {
      */
     function depositToWallet() external payable {
         walletContract.deposit{value: msg.value}();
+        emit Deposit(msg.sender, msg.value, block.timestamp);
     }
 
     /**
@@ -202,6 +226,7 @@ contract MessagingContract {
      */
     function withdrawFromWallet(uint256 _amount) external {
         walletContract.withdraw(_amount);
+        emit Withdrawal(msg.sender, _amount, block.timestamp);
     }
 
     /**
@@ -209,6 +234,13 @@ contract MessagingContract {
      */
     function getWalletBalance(address _user) external view returns (uint256) {
         return walletContract.getBalance(_user);
+    }
+
+    /**
+     * @dev Get the wallet contract address
+     */
+    function getWalletContractAddress() external view returns (address) {
+        return address(walletContract);
     }
 
     /**
