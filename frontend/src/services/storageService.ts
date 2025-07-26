@@ -4,7 +4,6 @@
  */
 
 export interface UserSettings {
-  theme: 'dark' | 'light'
   notifications: boolean
   autoConnect: boolean
   defaultGasLimit: string
@@ -42,7 +41,6 @@ export interface StorageKeys {
   PUBLIC_KEYS_CACHE: string
   LAST_BLOCK_NUMBER: string
   // App preferences
-  THEME: string
   SIDEBAR_COLLAPSED: string
 }
 
@@ -55,13 +53,11 @@ export const STORAGE_KEYS: StorageKeys = {
   WALLET_ADDRESS: 'zephex_wallet_address',
   PUBLIC_KEYS_CACHE: 'zephex_public_keys',
   LAST_BLOCK_NUMBER: 'zephex_last_block',
-  THEME: 'zephex_theme',
   SIDEBAR_COLLAPSED: 'zephex_sidebar_collapsed',
 }
 
 // Default settings
 const DEFAULT_SETTINGS: UserSettings = {
-  theme: 'dark',
   notifications: true,
   autoConnect: false,
   defaultGasLimit: '500000',
@@ -224,17 +220,6 @@ export function clearLastBlockNumber(): void {
   localStorage.removeItem(STORAGE_KEYS.LAST_BLOCK_NUMBER)
 }
 
-// === Theme Management ===
-
-export function storeTheme(theme: 'dark' | 'light'): void {
-  localStorage.setItem(STORAGE_KEYS.THEME, theme)
-}
-
-export function getTheme(): 'dark' | 'light' {
-  const stored = localStorage.getItem(STORAGE_KEYS.THEME) as 'dark' | 'light'
-  return stored || 'dark'
-}
-
 // === Sidebar State ===
 
 export function storeSidebarCollapsed(collapsed: boolean): void {
@@ -351,7 +336,8 @@ export function importUserData(
     
     if (data.publicKeysCache) {
       storePublicKeysCache(data.publicKeysCache)
-    }
+}
+    
     
     return true
   } catch (error) {

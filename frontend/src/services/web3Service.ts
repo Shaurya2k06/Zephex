@@ -1,6 +1,6 @@
 import {ethers} from 'ethers'
-import { MESSAGING_CONTRACT_ABI } from '@/contracts/abi'
-import { CONTRACT_ADDRESSES , MESSAGE_FEE_ETH } from '@/utils/constants'
+import { MESSAGING_CONTRACT_ABI } from '../contracts/abi'
+import { CONTRACT_ADDRESSES , MESSAGE_FEE_ETH } from '../utils/constants'
 
 declare global {
     interface Window {

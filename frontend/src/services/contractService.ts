@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { getContract, getContractReadOnly } from './web3Service'
-import { encryptMessage, generateNonce, derivePublicKeyFromAddress } from './encryptionService'
+import { encryptMessage, generateShortNonce, derivePublicKeyFromAddress } from '../utils/encryption'
 import { MESSAGE_FEE_ETH } from '../utils/constants'
 import type { ContractMessage } from '../types/contract'
 
@@ -37,7 +37,7 @@ export async function sendMessageToContract(params: SendMessageParams): Promise<
     const encryptedContent = await encryptMessage(content, publicKey)
     
     // Generate a unique nonce
-    const nonce = generateNonce()
+    const nonce = generateShortNonce()
     
     // Send transaction
     const transaction = await contract.sendMessage(

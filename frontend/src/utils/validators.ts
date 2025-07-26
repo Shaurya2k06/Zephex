@@ -21,6 +21,19 @@ export function validateMessage(content: string): { isValid: boolean; error?: st
     }
     return { isValid: true }
 }
+
+// Validate nonce
+export function validateNonce(nonce: string): { isValid: boolean; error?: string } {
+  if (!nonce || nonce.trim().length === 0) {
+    return { isValid: false, error: 'Nonce cannot be empty' }
+  }
+  
+  if (nonce.length > MAX_NONCE_LENGTH) {
+    return { isValid: false, error: `Nonce too long. Maximum ${MAX_NONCE_LENGTH} characters` }
+  }
+  
+  return { isValid: true }
+}
 export function validateEthAmount(amount: string): { isValid: boolean; error?: string } {
   try {
     const parsed = ethers.parseEther(amount)
@@ -35,8 +48,8 @@ export function validateEthAmount(amount: string): { isValid: boolean; error?: s
 export function hasSufficientBalance(amount: string, balance: string): boolean {
     try {
         const amountWei = ethers.parseEther(amount)
-        const balanceWei = ethers.parseEther(amount)
-        return balanceWei>=amountWei
+        const balanceWei = ethers.parseEther(balance)
+        return balanceWei >= amountWei
     } catch {
         return false
     }
