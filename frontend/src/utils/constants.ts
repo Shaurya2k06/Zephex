@@ -1,7 +1,7 @@
 // Contract addresses for different networks
 export const CONTRACT_ADDRESSES = {
   // Sepolia Testnet
-  11155111: '0x44417425a6126Df01B38588Cc7701A009296Ed9A', // Deployed MessagingContract
+  11155111: '0x4C3F5a84041E562928394d63b3E339bE70DBcC17', // Deployed MessagingContract
   // Local Hardhat Network
   31337: '0x5FbDB2315678afecb367f032d93F642f64180aa3', // Will be updated after local deployment
   // Mainnet (if needed)
