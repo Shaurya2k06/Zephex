@@ -8,6 +8,16 @@ export const CONTRACT_ADDRESSES = {
   1: '0x0000000000000000000000000000000000000000'
 } as const
 
+// Wallet contract addresses (will be deployed with messaging contract)
+export const WALLET_CONTRACT_ADDRESSES = {
+  // Sepolia Testnet
+  11155111: '0x0000000000000000000000000000000000000000', // Will be updated after wallet deployment
+  // Local Hardhat Network
+  31337: '0x0000000000000000000000000000000000000000', // Will be updated after local deployment
+  // Mainnet (if needed)
+  1: '0x0000000000000000000000000000000000000000'
+} as const
+
 // Network configurations
 export const NETWORKS = {
   11155111: {

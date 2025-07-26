@@ -1,7 +1,5 @@
-import { ethers } from 'ethers'
 import { getContract, getContractReadOnly } from './web3Service'
 import { encryptMessage, generateShortNonce, derivePublicKeyFromAddress } from '../utils/encryption'
-import { MESSAGE_FEE_ETH } from '../utils/constants'
 import type { ContractMessage } from '../types/contract'
 
 export interface SendMessageParams {
@@ -23,7 +21,7 @@ export interface BlockchainMessage {
   isDecrypted: boolean
 }
 
-// Send a message to the blockchain
+// Send a message to the blockchain using wallet balance
 export async function sendMessageToContract(params: SendMessageParams): Promise<string> {
   const { to, content, recipientPublicKey } = params
   
@@ -39,13 +37,12 @@ export async function sendMessageToContract(params: SendMessageParams): Promise<
     // Generate a unique nonce
     const nonce = generateShortNonce()
     
-    // Send transaction
+    // Send transaction (no manual fee payment - handled by wallet contract)
     const transaction = await contract.sendMessage(
       to,
       encryptedContent,
       nonce,
       { 
-        value: ethers.parseEther(MESSAGE_FEE_ETH),
         gasLimit: 500000
       }
     )
