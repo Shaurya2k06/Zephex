@@ -7,7 +7,10 @@ import {
   listenForMessages
 } from '../services/contractService'
 import type { BlockchainMessage } from '../services/contractService'
-import { decryptMessage, generateKeyPair } from '../services/encryptionService'
+import { 
+  decryptMessage, 
+  initializeEncryption 
+} from '../utils/encryption'
 
 interface Message {
   id: string
@@ -54,24 +57,26 @@ export function MessageProvider({ children }: MessageProviderProps) {
   const [error, setError] = useState('')
   const [encryptionKeys, setEncryptionKeys] = useState<{ publicKey: string; privateKey: string } | null>(null)
 
-  // Generate or load encryption keys
+  // Initialize encryption with MetaMask
   useEffect(() => {
     const initializeKeys = async () => {
       if (!user?.address) return
 
       try {
-        // Check if we have keys in localStorage
-        const storedKeys = localStorage.getItem(`zephex_keys_${user.address}`)
-        if (storedKeys) {
-          setEncryptionKeys(JSON.parse(storedKeys))
+        // Use MetaMask's encryption public key
+        const result = await initializeEncryption(user.address)
+        if (result.isSupported && result.publicKey) {
+          setEncryptionKeys({
+            publicKey: result.publicKey,
+            privateKey: user.address // We use the address as identifier for MetaMask decryption
+          })
         } else {
-          // Generate new keys
-          const newKeys = await generateKeyPair()
-          setEncryptionKeys(newKeys)
-          localStorage.setItem(`zephex_keys_${user.address}`, JSON.stringify(newKeys))
+          console.warn('Encryption not supported:', result.error)
+          setError(result.error || 'Encryption not supported')
         }
-      } catch (err) {
-        console.error('Failed to initialize encryption keys:', err)
+      } catch (err: any) {
+        console.error('Failed to initialize encryption:', err)
+        setError('Failed to initialize encryption')
       }
     }
 
@@ -134,10 +139,9 @@ export function MessageProvider({ children }: MessageProviderProps) {
           let isDecrypted = false
 
           try {
-            if (encryptionKeys?.privateKey) {
-              decryptedContent = await decryptMessage(msg.encryptedContent, encryptionKeys.privateKey)
-              isDecrypted = true
-            }
+            // Use user address for MetaMask decryption
+            decryptedContent = await decryptMessage(msg.encryptedContent, user.address)
+            isDecrypted = true
           } catch (err) {
             console.warn('Failed to decrypt message:', err)
             // Keep encrypted content as fallback
@@ -182,10 +186,9 @@ export function MessageProvider({ children }: MessageProviderProps) {
           let isDecrypted = false
 
           try {
-            if (encryptionKeys?.privateKey) {
-              decryptedContent = await decryptMessage(newMessage.encryptedContent, encryptionKeys.privateKey)
-              isDecrypted = true
-            }
+            // Use user address for MetaMask decryption
+            decryptedContent = await decryptMessage(newMessage.encryptedContent, user.address)
+            isDecrypted = true
           } catch (err) {
             console.warn('Failed to decrypt new message:', err)
           }
