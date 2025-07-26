@@ -1,12 +1,9 @@
 // Contract addresses for different networks
 export const CONTRACT_ADDRESSES = {
   // Sepolia Testnet
-  11155111: '0x4C3F5a84041E562928394d63b3E339bE70DBcC17', // Deployed MessagingContract
-  // Local Hardhat Network
-  31337: '0x5FbDB2315678afecb367f032d93F642f64180aa3', // Will be updated after local deployment
-  // Mainnet (if needed)
-  1: '0x0000000000000000000000000000000000000000'
-} as const
+  11155111: '0xAC7eC9008D7Bd2354786E2bdeEd83907D1FB2Cc3',
+  // Add other networks as needed
+};
 
 // Wallet contract addresses (will be deployed with messaging contract)
 export const WALLET_CONTRACT_ADDRESSES = {

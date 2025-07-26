@@ -38,6 +38,7 @@ export async function sendMessageToContract(params: SendMessageParams): Promise<
     const nonce = generateShortNonce()
     
     // Send transaction (no manual fee payment - handled by wallet contract)
+    // Note: sendMessage is now non-payable in MessagingContractV2
     const transaction = await contract.sendMessage(
       to,
       encryptedContent,
