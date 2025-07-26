@@ -5,7 +5,7 @@ import { useWalletBalance, useWalletOperations } from './hooks/useWalletBalance'
 import { ComicText } from './components/magicui/comic-text'
 import { DotPattern } from './components/magicui/dot-pattern'
 import { LandingScreen } from './components/LandingScreen'
-import { ZephexLogo } from './components/ui/ZephexLogo'
+
 import './App.css'
 
 // Comic Loading Spinner Component
@@ -50,7 +50,7 @@ function WalletConnect() {
                 ZEPHEX!
               </ComicText>
               <div className="text-lg font-bold text-gray-700 transform -skew-x-12 bg-yellow-200 px-4 py-2 rounded-lg border-2 border-black animate-pulse-glow">
-                🎮 Epic Messaging Platform!
+                 Epic Messaging Platform!
               </div>
             </div>                    <button
               onClick={connectWallet}
@@ -270,7 +270,7 @@ function ChatWindow() {
                    No conversations yet!
                 </div>
                 <div className="text-yellow-700 text-xs mt-1">
-                  Add a contact to start chatting! 🚀
+                  Add a contact to start chatting!
                 </div>
               </div>
             </div>
@@ -300,7 +300,7 @@ function ChatWindow() {
         {/* User Info */}
         <div className="p-4 border-t-4 border-black bg-gradient-to-r from-indigo-200 to-pink-200">
           <div className="bg-white/80 p-3 rounded-xl border-2 border-black transform skew-x-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            <div className="text-xs font-bold text-indigo-700">🎮 PLAYER:</div>
+            <div className="text-xs font-bold text-indigo-700"> PLAYER:</div>
             <div className="text-sm font-mono font-bold text-indigo-900">
               {user?.address ? `${user.address.slice(0, 6)}...${user.address.slice(-4)}` : ''}
             </div>
@@ -317,9 +317,6 @@ function ChatWindow() {
               <div className="bg-white/90 p-3 rounded-xl border-2 border-black transform -skew-x-6 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 <div className="font-bold text-gray-900 text-lg">
                    CHATTING WITH: {selectedContact.slice(0, 6)}...{selectedContact.slice(-4)}
-                </div>
-                <div className="text-sm text-gray-700 font-medium">
-                   {conversations[selectedContact]?.length || 0} messages sent!
                 </div>
               </div>
             </div>
@@ -358,7 +355,7 @@ function ChatWindow() {
                   type="text"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Type your epic message here! 💭"
+                  placeholder="Type your epic message here!"
                   className="flex-1 px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-bold bg-white/90 placeholder-gray-600 text-black"
                   disabled={isSending}
                 />

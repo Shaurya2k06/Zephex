@@ -1,31 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "./UserWalletContract.sol";
+interface IUserWalletContract {
+    function canAfford(address user, uint256 amount) external view returns (bool);
+    function spend(address from, uint256 amount) external returns (bool);
+}
 
 /**
- * @title MessagingContract
- * @dev End-to-end encrypted messaging system using IPFS for storage
- * @notice Messages are encrypted off-chain and stored on-chain as IPFS CIDs
+ * @title MessagingContractV3Simple
+ * @dev IPFS-based encrypted messaging with escrow support
  */
-contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
+contract MessagingContractV3Simple {
     
-    // Message structure
     struct Message {
         address sender;
         address receiver;
         string cid; // IPFS hash of encrypted content
         uint256 timestamp;
-        uint256 messageId;
     }
     
     // State variables
-    UserWalletContract public immutable walletContract;
+    IUserWalletContract public immutable walletContract;
+    address public owner;
     address public escrowAddress;
-    uint256 public messageFee; // Fee in wei (ETH)
+    uint256 public messageFee;
     uint256 public messageCounter;
     
     // Rate limiting
@@ -40,6 +38,10 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
     mapping(address => uint256[]) public userReceivedMessages;
     mapping(address => mapping(address => uint256[])) public conversationMessages;
     
+    // Anti-abuse
+    mapping(address => bool) public blockedUsers;
+    bool public paused = false;
+    
     // Events
     event MessageSent(
         uint256 indexed messageId,
@@ -53,23 +55,32 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
     event EscrowAddressUpdated(address oldEscrow, address newEscrow);
     event RateLimitUpdated(uint256 oldLimit, uint256 newLimit);
     event UserBlocked(address indexed user, bool blocked);
+    event ContractPaused(bool paused);
     
     // Errors
     error InsufficientBalance();
     error InvalidReceiver();
-    error EmptyMessage();
     error InvalidEscrowAddress();
     error RateLimitExceeded();
-    error InvalidFee();
     error TransferFailed();
-    error UserBlocked();
+    error UserIsBlocked();
     error InvalidCID();
+    error ZeroAddress();
+    error OnlyOwner();
+    error ContractIsPaused();
     
-    // Rate limiting and anti-abuse
-    mapping(address => bool) public blockedUsers;
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert OnlyOwner();
+        _;
+    }
+    
+    modifier whenNotPaused() {
+        if (paused) revert ContractIsPaused();
+        _;
+    }
     
     modifier notBlocked() {
-        if (blockedUsers[msg.sender]) revert UserBlocked();
+        if (blockedUsers[msg.sender]) revert UserIsBlocked();
         _;
     }
     
@@ -84,13 +95,11 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
     }
     
     modifier rateLimited() {
-        // Check rate limiting
         if (block.timestamp - lastMessageTime[msg.sender] < RATE_LIMIT_WINDOW) {
             if (messageCount[msg.sender] >= maxMessagesPerHour) {
                 revert RateLimitExceeded();
             }
         } else {
-            // Reset counter if window passed
             messageCount[msg.sender] = 0;
         }
         _;
@@ -101,24 +110,24 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
         address _escrowAddress,
         uint256 _messageFee
     ) {
-        if (_walletContract == address(0)) revert InvalidReceiver();
+        if (_walletContract == address(0)) revert ZeroAddress();
         if (_escrowAddress == address(0)) revert InvalidEscrowAddress();
         
-        walletContract = UserWalletContract(_walletContract);
+        walletContract = IUserWalletContract(_walletContract);
+        owner = msg.sender;
         escrowAddress = _escrowAddress;
         messageFee = _messageFee;
         messageCounter = 0;
     }
     
     /**
-     * @dev Send an encrypted message via IPFS
+     * @dev Send an encrypted message via IPFS CID
      * @param receiver Address of the message recipient
      * @param cid IPFS content identifier of the encrypted message
      * @return messageId Unique identifier for the message
      */
     function sendMessage(address receiver, string memory cid)
         external
-        nonReentrant
         whenNotPaused
         notBlocked
         validReceiver(receiver)
@@ -145,12 +154,12 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
         messageCounter++;
         messageId = messageCounter;
         
-        Message storage newMessage = messages[messageId];
-        newMessage.sender = msg.sender;
-        newMessage.receiver = receiver;
-        newMessage.cid = cid;
-        newMessage.timestamp = block.timestamp;
-        newMessage.messageId = messageId;
+        messages[messageId] = Message({
+            sender: msg.sender,
+            receiver: receiver,
+            cid: cid,
+            timestamp: block.timestamp
+        });
         
         // Update indexes
         userSentMessages[msg.sender].push(messageId);
@@ -173,87 +182,49 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
     
     /**
      * @dev Get message details by ID
-     * @param messageId Message identifier
-     * @return message Message struct
      */
     function getMessage(uint256 messageId) external view returns (Message memory message) {
         return messages[messageId];
     }
     
     /**
-     * @dev Get messages sent by a user
+     * @dev Get messages for a user
      * @param user User address
-     * @return messageIds Array of message IDs
+     * @param sent True for sent messages, false for received
      */
-    function getSentMessages(address user) external view returns (uint256[] memory messageIds) {
-        return userSentMessages[user];
-    }
-    
-    /**
-     * @dev Get messages received by a user
-     * @param user User address  
-     * @return messageIds Array of message IDs
-     */
-    function getReceivedMessages(address user) external view returns (uint256[] memory messageIds) {
-        return userReceivedMessages[user];
+    function getMessages(address user, bool sent) external view returns (uint256[] memory messageIds) {
+        return sent ? userSentMessages[user] : userReceivedMessages[user];
     }
     
     /**
      * @dev Get conversation between two users
      * @param user1 First user address
      * @param user2 Second user address
-     * @return messageIds Array of message IDs
+     * @param limit Maximum number of messages (0 = all)
      */
-    function getConversation(address user1, address user2) 
+    function getConversation(address user1, address user2, uint256 limit) 
         external 
         view 
         returns (uint256[] memory messageIds) 
     {
-        return conversationMessages[user1][user2];
-    }
-    
-    /**
-     * @dev Get messages in a paginated way
-     * @param user User address
-     * @param offset Starting index
-     * @param limit Number of messages to return
-     * @param sent True for sent messages, false for received
-     * @return messageIds Array of message IDs
-     * @return hasMore Whether there are more messages
-     */
-    function getMessagesPaginated(
-        address user,
-        uint256 offset,
-        uint256 limit,
-        bool sent
-    ) external view returns (uint256[] memory messageIds, bool hasMore) {
-        uint256[] storage allMessages = sent ? userSentMessages[user] : userReceivedMessages[user];
+        uint256[] storage allMessages = conversationMessages[user1][user2];
         
-        if (offset >= allMessages.length) {
-            return (new uint256[](0), false);
+        if (limit == 0 || limit >= allMessages.length) {
+            return allMessages;
         }
         
-        uint256 end = offset + limit;
-        if (end > allMessages.length) {
-            end = allMessages.length;
+        uint256 startIndex = allMessages.length - limit;
+        messageIds = new uint256[](limit);
+        
+        for (uint256 i = 0; i < limit; i++) {
+            messageIds[i] = allMessages[startIndex + i];
         }
         
-        uint256 resultLength = end - offset;
-        messageIds = new uint256[](resultLength);
-        
-        for (uint256 i = 0; i < resultLength; i++) {
-            messageIds[i] = allMessages[offset + i];
-        }
-        
-        hasMore = end < allMessages.length;
+        return messageIds;
     }
     
     /**
      * @dev Get latest messages for a user
-     * @param user User address
-     * @param count Number of latest messages to get
-     * @param sent True for sent messages, false for received
-     * @return latestMessages Array of message structs
      */
     function getLatestMessages(address user, uint256 count, bool sent)
         external
@@ -262,7 +233,7 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
     {
         uint256[] storage messageIds = sent ? userSentMessages[user] : userReceivedMessages[user];
         
-        if (messageIds.length == 0) {
+        if (messageIds.length == 0 || count == 0) {
             return new Message[](0);
         }
         
@@ -277,22 +248,28 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
         }
     }
     
+    /**
+     * @dev Check if user can send a message
+     */
+    function canSendMessage(address user) external view returns (bool canSend, uint8 reason) {
+        if (blockedUsers[user]) return (false, 3); // Blocked
+        if (!walletContract.canAfford(user, messageFee)) return (false, 1); // Insufficient balance
+        
+        if (block.timestamp - lastMessageTime[user] < RATE_LIMIT_WINDOW) {
+            if (messageCount[user] >= maxMessagesPerHour) return (false, 2); // Rate limited
+        }
+        
+        return (true, 0); // Can send
+    }
+    
     // Admin functions
     
-    /**
-     * @dev Update message fee (admin only)
-     * @param newFee New fee amount in wei
-     */
     function setMessageFee(uint256 newFee) external onlyOwner {
         uint256 oldFee = messageFee;
         messageFee = newFee;
         emit MessageFeeUpdated(oldFee, newFee);
     }
     
-    /**
-     * @dev Update escrow address (admin only)
-     * @param newEscrow New escrow address
-     */
     function setEscrowAddress(address newEscrow) external onlyOwner {
         if (newEscrow == address(0)) revert InvalidEscrowAddress();
         address oldEscrow = escrowAddress;
@@ -300,33 +277,22 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
         emit EscrowAddressUpdated(oldEscrow, newEscrow);
     }
     
-    /**
-     * @dev Update rate limit (admin only)
-     * @param newLimit New max messages per hour
-     */
     function setRateLimit(uint256 newLimit) external onlyOwner {
         uint256 oldLimit = maxMessagesPerHour;
         maxMessagesPerHour = newLimit;
         emit RateLimitUpdated(oldLimit, newLimit);
     }
     
-    /**
-     * @dev Block/unblock a user (admin only)
-     * @param user User address
-     * @param blocked Whether to block the user
-     */
     function setUserBlocked(address user, bool blocked) external onlyOwner {
         blockedUsers[user] = blocked;
         emit UserBlocked(user, blocked);
     }
     
-    /**
-     * @dev Get contract statistics
-     * @return totalMessages Total messages sent
-     * @return currentFee Current message fee
-     * @return escrowAddr Current escrow address
-     * @return totalFeesCollected Total fees collected
-     */
+    function setPaused(bool _paused) external onlyOwner {
+        paused = _paused;
+        emit ContractPaused(_paused);
+    }
+    
     function getContractStats() external view returns (
         uint256 totalMessages,
         uint256 currentFee,
@@ -341,19 +307,10 @@ contract MessagingContract is Ownable, ReentrancyGuard, Pausable {
         );
     }
     
-    /**
-     * @dev Pause/unpause contract
-     */
-    function pause() external onlyOwner {
-        _pause();
+    receive() external payable {
+        if (msg.value > 0) {
+            (bool success, ) = payable(escrowAddress).call{value: msg.value}("");
+            if (!success) revert TransferFailed();
+        }
     }
-    
-    function unpause() external onlyOwner {
-        _unpause();
-    }
-    
-    /**
-     * @dev Fallback to receive ETH from wallet contract
-     */
-    receive() external payable {}
 }

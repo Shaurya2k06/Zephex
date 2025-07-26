@@ -1,18 +1,23 @@
 // Contract addresses for different networks
 export const CONTRACT_ADDRESSES = {
-  // Sepolia Testnet
-  11155111: '0xAC7eC9008D7Bd2354786E2bdeEd83907D1FB2Cc3',
-  // Add other networks as needed
-};
-
-// Wallet contract addresses (will be deployed with messaging contract)
-export const WALLET_CONTRACT_ADDRESSES = {
-  // Sepolia Testnet
-  11155111: '0x0000000000000000000000000000000000000000', // Will be updated after wallet deployment
+  // Sepolia Testnet - New V3 Messaging System
+  11155111: {
+    messaging: '0xf388F7e76e546183420a9C64CbA8A45eC31A668F',
+    wallet: '0x356C2eBF9D6Bd617300F2476beF1E43452D064BF',
+    escrow: '0x6809a01e367CEd8Ee03D87180590eA4161ad0ce1'
+  },
   // Local Hardhat Network
-  31337: '0x0000000000000000000000000000000000000000', // Will be updated after local deployment
-  // Mainnet (if needed)
-  1: '0x0000000000000000000000000000000000000000'
+  31337: {
+    messaging: '0x0000000000000000000000000000000000000000',
+    wallet: '0x0000000000000000000000000000000000000000',
+    escrow: '0x0000000000000000000000000000000000000000'
+  },
+  // Mainnet (for future deployment)
+  1: {
+    messaging: '0x0000000000000000000000000000000000000000',
+    wallet: '0x0000000000000000000000000000000000000000',
+    escrow: '0x0000000000000000000000000000000000000000'
+  }
 } as const
 
 // Network configurations
@@ -40,11 +45,13 @@ export const NETWORKS = {
   }
 } as const
 
-// App constants
+// App constants - Updated for V3 system
 export const MESSAGE_FEE_ETH = '0.001' // 0.001 ETH per message
-export const RATE_LIMIT_SECONDS = 1 // 1 second between messages
-export const MAX_MESSAGE_LENGTH = 4096 // Max encrypted message length
-export const MAX_NONCE_LENGTH = 64 // Max nonce length
+export const MINIMUM_DEPOSIT_ETH = '0.01' // 0.01 ETH minimum deposit
+export const RATE_LIMIT_HOURS = 1 // 1 hour rate limit window
+export const MAX_MESSAGES_PER_HOUR = 100 // 100 messages per hour
+export const MAX_CID_LENGTH = 200 // Max IPFS CID length
+export const RATE_LIMIT_WINDOW = 3600 // 1 hour in seconds
 
 // Default values
 export const DEFAULT_CHAIN_ID = 11155111 // Sepolia testnet
