@@ -1,18 +1,20 @@
 # Zephex
 
-**Fully On-Chain Encrypted Messaging App**
+**Fully On-Chain Encrypted Messaging App with IPFS Storage**
 
-A decentralized, censorship-resistant, privacy-focused messaging application where all messages are stored on-chain with end-to-end encryption.
+A decentralized, censorship-resistant, privacy-focused messaging application where encrypted messages are stored on IPFS and message metadata is stored on-chain with end-to-end encryption.
 
 ## 🚀 Features
 
-- **End-to-End Encryption**: Messages encrypted with wallet-derived keys
-- **On-Chain Storage**: All messages permanently stored on blockchain
+- **End-to-End Encryption**: Messages encrypted client-side before IPFS storage
+- **IPFS Integration**: Encrypted content stored on IPFS, only CIDs on-chain
 - **Wallet Authentication**: MetaMask integration for seamless login
+- **User Wallet System**: Deposit/withdrawal functionality with spending authorization
+- **Escrow System**: Message fees held in escrow with refund capability
+- **Rate Limiting**: Anti-spam protection (100 messages/hour default)
 - **Decentralized**: No central servers or authorities
 - **Privacy-First**: Only sender and recipient can decrypt messages
 - **Comic-Style UI**: Fun, engaging interface with comic book aesthetics
-- **Landing Page**: Beautiful introduction screen
 - **Responsive Design**: Works on desktop and mobile
 
 ## 🛠 Tech Stack
@@ -22,18 +24,51 @@ A decentralized, censorship-resistant, privacy-focused messaging application whe
 - **TailwindCSS** - Utility-first CSS framework
 - **Ethers.js** - Web3 wallet interaction
 - **MetaMask** - Wallet connection and encryption
-- **Magic UI Components** - Comic text and dot pattern effects
+- **Framer Motion** - Animations and transitions
+- **Radix UI** - Accessible component primitives
 
 ### Smart Contracts
-- **Solidity ^0.8.28** - Smart contract language
+- **Solidity ^0.8.19** - Smart contract language
 - **Hardhat** - Development framework
+- **OpenZeppelin** - Security-audited contract libraries
 - **Sepolia Testnet** - Test network
 
-### Blockchain Features
-- **ECIES Encryption** - Elliptic Curve Integrated Encryption
-- **Message Events** - Indexed blockchain events
-- **Rate Limiting** - Anti-spam protection
-- **Fee System** - 0.001 ETH per message
+### Blockchain Architecture
+- **IPFS Storage**: Encrypted messages stored off-chain
+- **On-Chain Metadata**: Message CIDs, sender/receiver, timestamps
+- **User Wallets**: Deposit-based spending system
+- **Escrow Management**: Fee collection and refund system
+- **Rate Limiting**: Configurable message limits per user
+
+## 🏗 Smart Contract Architecture
+
+### Core Contracts
+
+#### 1. MessagingContractV3Simple.sol
+- **Primary messaging contract** with IPFS integration
+- Stores IPFS CIDs of encrypted messages on-chain
+- Integrates with user wallet system for fee payment
+- Rate limiting and anti-spam protection
+- Conversation indexing and pagination
+
+#### 2. UserWalletContractSimple.sol
+- **User deposit/withdrawal management**
+- Minimum deposit requirement (0.01 ETH)
+- Authorized spender pattern for messaging contracts
+- Balance tracking and spending authorization
+
+#### 3. SimpleEscrow.sol
+- **Message fee escrow system**
+- Holds fees from messaging transactions
+- Refund capability for disputed messages
+- Owner withdrawal functionality
+
+### Contract Features
+- **Minimum Deposit**: 0.01 ETH required for wallet deposits
+- **Message Fee**: 0.001 ETH per message (configurable)
+- **Rate Limiting**: 100 messages per hour per user
+- **IPFS CID Storage**: Up to 200 character CID strings
+- **Anti-Abuse**: User blocking and contract pause functionality
 
 ## 🏁 Quick Start
 
@@ -57,29 +92,40 @@ npx hardhat compile
 npx hardhat test
 ```
 
-### Deploy Contract
+### Deploy Contracts
 ```bash
 # Deploy to Sepolia
-npx hardhat run scripts/deploy-messaging.ts --network sepolia
+cd contracts
+npx hardhat run scripts/deploy-v3.ts --network sepolia
 ```
 
 ## 📱 How to Use
 
 1. **Landing Page**: View the introduction and click "Get Started"
 2. **Connect Wallet**: Click "Connect MetaMask" to authenticate
-3. **Chat Application**: Access the main messaging interface
-4. **Send Messages**: Enter recipient address and message content
-5. **View Messages**: All your encrypted messages in the chat interface
+3. **Deposit Funds**: Deposit ETH into your messaging wallet (minimum 0.01 ETH)
+4. **Send Messages**: 
+   - Encrypt message content client-side
+   - Upload encrypted content to IPFS
+   - Send IPFS CID through smart contract
+5. **Receive Messages**: Retrieve CIDs from blockchain and decrypt content from IPFS
 
-## 🔒 Security Features
+## 🔒 Security & Privacy
 
+### Encryption Flow
+1. **Client-Side Encryption**: Messages encrypted before leaving browser
+2. **IPFS Upload**: Encrypted content uploaded to IPFS
+3. **On-Chain Storage**: Only IPFS CID stored on blockchain
+4. **Decryption**: Recipients fetch from IPFS and decrypt locally
+
+### Security Features
 - **Wallet-Based Authentication**: No passwords, only wallet signatures
-- **End-to-End Encryption**: Messages encrypted before blockchain storage
-- **Rate Limiting**: 1 second cooldown between messages
-- **Input Validation**: Message length and content validation
-- **Gas Optimization**: Efficient smart contract design
+- **Rate Limiting**: Prevents spam attacks
+- **User Blocking**: Admin can block malicious users
+- **Emergency Pause**: Contract can be paused in emergencies
+- **Escrow System**: Fee refunds for disputed messages
 
-## 🏗 Architecture
+## 🏗 Current Architecture
 
 ### Frontend Structure
 ```
@@ -88,63 +134,43 @@ App.tsx                     # Main application with routing logic
 │   └── WalletContext      # Wallet connection management
 ├── components/
 │   ├── LandingScreen      # Introduction/welcome page
-│   ├── ChatApplication    # Main messaging interface
+│   ├── ChatApplication    # Main messaging interface (in development)
 │   └── magicui/           # Comic text and visual effects
 │       ├── comic-text     # Comic book style text
 │       └── dot-pattern    # Animated background pattern
 └── App.css               # Global styles and animations
 ```
 
-### Application Flow
-1. **Landing Screen** - Welcome page with "Get Started" button
-2. **Wallet Connection** - MetaMask connection with comic-style UI
-3. **Loading State** - Shows connecting status with back option
-4. **Chat Application** - Main messaging interface (when connected)
-
-### Smart Contract (`MessagingContract.sol`)
-```solidity
-- sendMessage(address to, string encryptedContent, string nonce)
-- registerPublicKey(string publicKey)  
-- getMessages(address user) returns (Message[])
-- Owner controls and emergency pause
+### Smart Contract Integration
 ```
-
-## 🎨 UI Features
-
-### Comic Book Aesthetics
-- **Comic Text Component**: Stylized comic book fonts
-- **Dot Pattern Background**: Animated halftone patterns
-- **Bold Colors**: Vibrant gradients and high contrast
-- **Floating Elements**: Animated decorative shapes
-- **Retro Shadows**: Bold drop shadows and borders
-
-### Animations
-- **Bounce Effects**: Loading spinners and decorative elements
-- **Hover Animations**: Scale and shadow effects
-- **Pulse Glows**: Attention-grabbing button effects
-- **Float Animation**: Subtle floating movement
-- **Shake Animation**: Error state feedback
+MessagingContractV3Simple   # Main messaging logic
+├── UserWalletContract     # Balance management
+├── SimpleEscrow          # Fee escrow
+└── IPFS Network          # Encrypted content storage
+```
 
 ## 🧪 Testing
 
-### Frontend Tests
+### Contract Tests
 ```bash
+cd contracts
 npm run test
 ```
 
-### Contract Tests  
+### Frontend Tests
 ```bash
-npx hardhat test
+cd frontend
+npm run test
 ```
 
 ### Test Coverage
-- ✅ Wallet connection/disconnection
-- ✅ Landing page navigation
-- ✅ Loading states and error handling
-- ✅ Smart contract deployment
-- ✅ Message sending/receiving
-- ✅ Rate limiting
-- ✅ Access controls
+- ✅ Smart contract deployment and functionality
+- ✅ User wallet deposit/withdrawal
+- ✅ Message sending with IPFS CID storage
+- ✅ Rate limiting and anti-spam
+- ✅ Escrow fee management
+- ✅ Frontend wallet connection
+- ✅ Landing page and navigation
 
 ## 🔧 Configuration
 
@@ -156,98 +182,99 @@ INFURA_PROJECT_ID=your_infura_id
 ETHERSCAN_API_KEY=your_etherscan_key
 ```
 
-### Network Configuration
-- **Sepolia Testnet**: ChainId 11155111
-- **RPC**: Infura endpoint
-- **Gas Price**: 20 gwei
-- **Message Fee**: 0.001 ETH
+### Contract Parameters
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Minimum Deposit | 0.01 ETH | Required for wallet deposits |
+| Message Fee | 0.001 ETH | Fee per message |
+| Rate Limit | 100 msg/hour | Anti-spam protection |
+| Max CID Length | 200 chars | IPFS CID limit |
 
 ## 🚧 Current Status
 
-### ✅ Working Features
-- Complete landing page with comic aesthetics
-- Wallet connection with MetaMask integration
-- Comic-style UI with animations and effects
-- Responsive design for all screen sizes
-- Loading states and error handling
-- Proper navigation flow between screens
-- WalletContext for state management
+### ✅ Completed Features
+- Complete smart contract architecture with IPFS integration
+- User wallet system with deposit/withdrawal
+- Escrow system for message fees
+- Rate limiting and anti-spam protection
+- Frontend landing page with comic aesthetics
+- Wallet connection with MetaMask
+- Responsive design and animations
 
 ### 🔄 In Progress  
 - ChatApplication component implementation
-- Blockchain integration (smart contract connection)
-- Real encryption/decryption
-- Message history from blockchain
-- Gas optimization
+- IPFS client integration in frontend
+- Message encryption/decryption in browser
+- Contract deployment and verification
+- Frontend-to-contract integration
 
 ### 📋 TODO
-- Complete messaging functionality
-- IPFS integration for message attachments
+- Complete messaging UI implementation
+- IPFS pinning service integration
 - ENS name resolution
-- Group messaging
-- Stealth addresses
-- ZK proof integration
+- Group messaging capabilities
+- Message attachments support
+- Mobile app development
 
-## 🐛 Known Issues
+## 🛡️ Security Considerations
 
-- ChatApplication component needs full implementation
-- Need to connect frontend to deployed smart contract
-- Encryption implementation pending
-- Gas fee estimation needed
-- Back button from connecting state returns to landing
+### Smart Contract Security
+- Uses OpenZeppelin battle-tested contracts
+- ReentrancyGuard protection
+- Input validation and error handling
+- Rate limiting prevents abuse
+- Emergency pause functionality
 
-## 📞 Development
+### Privacy Features
+- Client-side encryption only
+- No plaintext data on blockchain
+- IPFS content addressing
+- Wallet-based identity
+- No centralized data storage
 
-### Local Development
+## 📁 Project Structure
+
+```
+Zephex/
+├── frontend/              # React application
+│   ├── src/
+│   │   ├── components/   # UI components
+│   │   ├── contexts/     # React contexts
+│   │   └── magicui/      # Custom UI components
+│   └── package.json
+├── contracts/             # Smart contracts
+│   ├── contracts/        # Solidity source
+│   ├── scripts/          # Deployment scripts
+│   ├── test/            # Contract tests
+│   └── package.json
+└── README.md             # This file
+```
+
+## 🚀 Deployment
+
+### Testnet Deployment
+The contracts are designed for Sepolia testnet deployment:
+
 ```bash
-# Start frontend
-cd frontend
-npm run dev
-
-# Start local hardhat node (in contracts directory)
 cd contracts
-npx hardhat node
-
-# Deploy to local network
-npx hardhat run scripts/deploy.ts --network localhost
+npm run deploy:sepolia
 ```
 
-### Smart Contract Development
-```bash
-# Compile contracts
-npx hardhat compile
-
-# Run tests
-npx hardhat test
-
-# Deploy and verify
-npx hardhat run scripts/deploy-messaging.ts --network sepolia
-```
-
-## 🎯 Next Steps
-
-1. **Complete ChatApplication Component**
-   - Message input and display
-   - Contact management
-   - Message history
-
-2. **Integrate Smart Contracts**
-   - Connect to deployed contract
-   - Implement encryption/decryption
-   - Handle blockchain transactions
-
-3. **Enhanced Features**
-   - Message attachments
-   - Group chats
-   - User profiles
+### Production Considerations
+- **Mainnet Deployment**: Requires audit and security review
+- **IPFS Pinning**: Need reliable pinning service
+- **Gas Optimization**: Further optimization for mainnet costs
+- **Governance**: Consider upgradeability patterns
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch
-3. Write tests for new features
-4. Ensure all tests pass
-5. Submit pull request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Write tests for new functionality
+4. Ensure all tests pass (`npm test`)
+5. Commit changes (`git commit -m 'Add amazing feature'`)
+6. Push to branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ## 📄 License
 
@@ -255,4 +282,4 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Built with ❤️ for decentralized communication**
+**Building the future of decentralized communication** 🚀
