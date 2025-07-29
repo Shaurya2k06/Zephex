@@ -1,5 +1,5 @@
 import {ethers} from 'ethers'
-import { MESSAGING_CONTRACT_ABI } from '../contracts/abi'
+import { MESSAGING_V3_CONTRACT_ABI } from '../contracts/messaging-v3-abi'
 import { CONTRACT_ADDRESSES , MESSAGE_FEE_ETH } from '../utils/constants'
 
 declare global {
@@ -8,12 +8,11 @@ declare global {
     }
 }
 export function getContractAddress(chainId: number): string {
-    const address = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES]
-    if (!address || address === '0x0000000000000000000000000000000000000000') {
-        throw new Error(`Contract not Deployed on Blockchain`)
-
+    const addresses = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES]
+    if (!addresses || !addresses.messaging || addresses.messaging === '0x0000000000000000000000000000000000000000') {
+        throw new Error(`Contract not Deployed on Blockchain with chainId: ${chainId}`)
     }
-    return address
+    return addresses.messaging
 }
 export function getProvider(): ethers.BrowserProvider {
     if(!window.ethereum) {
@@ -30,14 +29,14 @@ export async function getContract(): Promise<ethers.Contract> {
     const network = await signer.provider.getNetwork()
     const chainId= Number(network.chainId) 
     const contractAddress = getContractAddress(chainId)
-    return new ethers.Contract(contractAddress, MESSAGING_CONTRACT_ABI, signer)
+    return new ethers.Contract(contractAddress, MESSAGING_V3_CONTRACT_ABI, signer)
 }
 export async function getContractReadOnly(): Promise<ethers.Contract> {
     const provider = getProvider()
     const network = await provider.getNetwork()
     const chainId= Number (network.chainId) 
     const contractAddress= getContractAddress(chainId)
-    return new ethers.Contract(contractAddress, MESSAGING_CONTRACT_ABI, provider)
+    return new ethers.Contract(contractAddress, MESSAGING_V3_CONTRACT_ABI, provider)
  }
  export async function switchToNetwork(chainId:number): Promise<void> {
     if (!window.ethereum) {

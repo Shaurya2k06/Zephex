@@ -1,10 +1,10 @@
 // Contract addresses for different networks
 export const CONTRACT_ADDRESSES = {
-  // Sepolia Testnet - New V3 Messaging System
+  // Sepolia Testnet - New V3 Messaging System (Fixed Version)
   11155111: {
-    messaging: '0xf388F7e76e546183420a9C64CbA8A45eC31A668F',
-    wallet: '0x356C2eBF9D6Bd617300F2476beF1E43452D064BF',
-    escrow: '0x6809a01e367CEd8Ee03D87180590eA4161ad0ce1'
+    messaging: '0xAeE176619A84c228ba398BA4b88a43B469898d75',
+    wallet: '0x7a45a9f4a857B2ca33A1EeDE349fc77fA4758684',
+    escrow: '0x4C3F5a84041E562928394d63b3E339bE70DBcC17'
   },
   // Local Hardhat Network
   31337: {

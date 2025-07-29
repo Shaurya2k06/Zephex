@@ -1,7 +1,7 @@
 // IPFS Service for Zephex Messaging
 // Uses Pinata for real IPFS with mock fallback
 
-import { pinataIPFS } from './pinataIPFS';
+import { pinataService } from './ipfs';
 
 interface IPFSUploadResult {
   cid: string;
@@ -38,7 +38,7 @@ export class IPFSService {
       // Try Pinata first for real IPFS
       try {
         console.log('Attempting to upload to Pinata IPFS...');
-        const result = await pinataIPFS.uploadContent(content);
+        const result = await pinataService.uploadContent(content);
         
         // Also store in mock storage as backup
         this.mockStorage.set(result.cid, {
@@ -85,7 +85,7 @@ export class IPFSService {
       // Try Pinata first
       try {
         console.log(`Attempting to retrieve from Pinata: ${cid}`);
-        const content = await pinataIPFS.getContent(cid);
+        const content = await pinataService.getContent(cid);
         if (content) {
           return content;
         }

@@ -95,6 +95,10 @@ contract UserWalletContract {
         userBalances[from] -= amount;
         totalSpent += amount;
         
+        // Transfer the ETH to the calling contract (messaging contract)
+        (bool transferSuccess, ) = payable(msg.sender).call{value: amount}("");
+        if (!transferSuccess) revert TransferFailed();
+        
         emit Spent(from, msg.sender, amount, userBalances[from]);
         return true;
     }

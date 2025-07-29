@@ -140,11 +140,11 @@ contract MessagingContractV3Simple {
             revert InsufficientBalance();
         }
         
-        // Deduct fee from user's wallet
+        // Deduct fee from user's wallet (this will transfer ETH to this contract)
         bool success = walletContract.spend(msg.sender, messageFee);
         if (!success) revert InsufficientBalance();
         
-        // Transfer fee to escrow
+        // Transfer fee to escrow (now we have the ETH to transfer)
         if (messageFee > 0) {
             (bool transferSuccess, ) = payable(escrowAddress).call{value: messageFee}("");
             if (!transferSuccess) revert TransferFailed();
@@ -308,9 +308,7 @@ contract MessagingContractV3Simple {
     }
     
     receive() external payable {
-        if (msg.value > 0) {
-            (bool success, ) = payable(escrowAddress).call{value: msg.value}("");
-            if (!success) revert TransferFailed();
-        }
+        // Allow receiving ETH from wallet contract during spend operations
+        // ETH will be forwarded to escrow during sendMessage function
     }
 }

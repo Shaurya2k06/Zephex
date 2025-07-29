@@ -1,5 +1,6 @@
 import { getContract, getContractReadOnly } from './web3Service'
-import { encryptMessage, generateShortNonce, derivePublicKeyFromAddress } from '../utils/encryption'
+import { encryptMessage, derivePublicKeyFromAddress } from '../utils/encryption'
+import { pinataService } from './ipfs'
 import type { ContractMessage } from '../types/contract'
 
 export interface SendMessageParams {
@@ -26,34 +27,41 @@ export async function sendMessageToContract(params: SendMessageParams): Promise<
   const { to, content, recipientPublicKey } = params
   
   try {
+    console.log('🚀 Starting message send process...');
+    
     const contract = await getContract()
     
     // Use provided public key or derive one from address
     const publicKey = recipientPublicKey || derivePublicKeyFromAddress(to)
+    console.log('🔑 Using public key for encryption');
     
     // Encrypt the message
+    console.log('🔐 Encrypting message...');
     const encryptedContent = await encryptMessage(content, publicKey)
     
-    // Generate a unique nonce
-    const nonce = generateShortNonce()
+    // Upload encrypted content to IPFS using Pinata
+    console.log('📤 Uploading to IPFS via Pinata...');
+    const ipfsResult = await pinataService.uploadContent(encryptedContent);
+    const cid = ipfsResult.cid;
+    console.log('✅ IPFS upload successful. CID:', cid);
     
-    // Send transaction (no manual fee payment - handled by wallet contract)
-    // Note: sendMessage is now non-payable in MessagingContractV2
+    // Send to V3 Contract: sendMessage(address receiver, string cid)
+    console.log('📝 Sending transaction to blockchain...');
     const transaction = await contract.sendMessage(
       to,
-      encryptedContent,
-      nonce,
+      cid,
       { 
         gasLimit: 500000
       }
     )
     
-    // Wait for transaction confirmation
+    console.log('⏳ Waiting for transaction confirmation...');
     await transaction.wait()
     
+    console.log('✅ Message sent successfully! TX Hash:', transaction.hash);
     return transaction.hash
   } catch (error: any) {
-    console.error('Failed to send message:', error)
+    console.error('❌ Failed to send message:', error)
     throw new Error(error.message || 'Failed to send message to blockchain')
   }
 }
@@ -61,77 +69,99 @@ export async function sendMessageToContract(params: SendMessageParams): Promise<
 // Get messages for a user from the blockchain
 export async function getMessagesFromContract(userAddress: string, offset = 0, limit = 50): Promise<BlockchainMessage[]> {
   try {
+    console.log('📨 Retrieving messages for user:', userAddress);
+    
     const contract = await getContractReadOnly()
     
-    // Get messages from contract
-    const messages: ContractMessage[] = await contract.getMessages(userAddress, offset, limit)
+    // V3 Contract: Get sent messages
+    const sentMessageIds: bigint[] = await contract.getMessages(userAddress, true)
+    // V3 Contract: Get received messages  
+    const receivedMessageIds: bigint[] = await contract.getMessages(userAddress, false)
     
-    // Convert to our format
-    const formattedMessages: BlockchainMessage[] = messages.map((msg, index) => ({
-      id: `${msg.from}-${msg.to}-${Number(msg.timestamp)}-${index}`,
-      from: msg.from,
-      to: msg.to,
-      encryptedContent: msg.encryptedContent,
-      content: msg.encryptedContent, // Will be decrypted later
-      timestamp: Number(msg.timestamp),
-      blockNumber: 0, // Will be filled from event logs
-      transactionHash: '', // Will be filled from event logs
-      nonce: msg.nonce,
-      isDecrypted: false
-    }))
+    console.log(`📊 Found ${sentMessageIds.length} sent and ${receivedMessageIds.length} received messages`);
     
-    return formattedMessages
+    // Combine and limit results
+    const allMessageIds = [...sentMessageIds, ...receivedMessageIds]
+    const limitedIds = allMessageIds.slice(offset, offset + limit)
+    
+    console.log(`📋 Processing ${limitedIds.length} messages...`);
+    
+    // Get message details for each ID
+    const messages: BlockchainMessage[] = []
+    for (let i = 0; i < limitedIds.length; i++) {
+      const messageId = limitedIds[i];
+      try {
+        console.log(`📥 Processing message ${i + 1}/${limitedIds.length} (ID: ${messageId})`);
+        
+        const messageData = await contract.getMessage(messageId)
+        
+        // Get encrypted content from IPFS
+        let encryptedContent = messageData.cid; // Default to CID
+        let retrievedContent: string | null = null;
+        
+        try {
+          console.log(`🔍 Retrieving content from IPFS: ${messageData.cid}`);
+          retrievedContent = await pinataService.getContent(messageData.cid);
+          if (retrievedContent) {
+            encryptedContent = retrievedContent;
+            console.log('✅ Successfully retrieved content from IPFS');
+          }
+        } catch (ipfsError) {
+          console.warn('⚠️ Failed to retrieve from IPFS, using CID as fallback:', ipfsError);
+        }
+        
+        messages.push({
+          id: `${messageData.sender}-${messageData.receiver}-${Number(messageData.timestamp)}-${Number(messageId)}`,
+          from: messageData.sender,
+          to: messageData.receiver,
+          encryptedContent: encryptedContent,
+          content: encryptedContent, // Will be decrypted later by the frontend
+          timestamp: Number(messageData.timestamp),
+          blockNumber: 0, // Will be filled from event logs
+          transactionHash: '', // Will be filled from event logs  
+          nonce: '', // V3 doesn't use nonce
+          isDecrypted: false
+        })
+      } catch (error) {
+        console.warn(`⚠️ Failed to get message ${messageId}:`, error)
+      }
+    }
+    
+    console.log(`✅ Successfully processed ${messages.length} messages`);
+    return messages
   } catch (error: any) {
-    console.error('Failed to get messages:', error)
+    console.error('❌ Failed to get messages:', error)
     throw new Error(error.message || 'Failed to get messages from blockchain')
   }
 }
 
-// Register user's public key
-export async function registerPublicKey(publicKey: string): Promise<string> {
-  try {
-    const contract = await getContract()
-    
-    const transaction = await contract.registerPublicKey(publicKey, {
-      gasLimit: 100000
-    })
-    
-    await transaction.wait()
-    return transaction.hash
-  } catch (error: any) {
-    console.error('Failed to register public key:', error)
-    throw new Error(error.message || 'Failed to register public key')
-  }
+// Register user's public key - NOT AVAILABLE IN V3
+export async function registerPublicKey(_publicKey: string): Promise<string> {
+  console.warn('registerPublicKey is not available in MessagingContractV3Simple')
+  // V3 contract doesn't have this function - return dummy hash
+  return '0x0000000000000000000000000000000000000000000000000000000000000000'
 }
 
-// Get user's public key from blockchain
-export async function getPublicKeyFromContract(userAddress: string): Promise<string> {
-  try {
-    const contract = await getContractReadOnly()
-    return await contract.getPublicKey(userAddress)
-  } catch (error: any) {
-    console.error('Failed to get public key:', error)
-    return ''
-  }
+// Get user's public key from blockchain - NOT AVAILABLE IN V3
+export async function getPublicKeyFromContract(_userAddress: string): Promise<string> {
+  console.warn('getPublicKey is not available in MessagingContractV3Simple')
+  // V3 contract doesn't have this function - return empty string
+  return ''
 }
 
-// Check if user is registered
-export async function isUserRegistered(userAddress: string): Promise<boolean> {
-  try {
-    const contract = await getContractReadOnly()
-    return await contract.isUserRegistered(userAddress)
-  } catch (error: any) {
-    console.error('Failed to check user registration:', error)
-    return false
-  }
+// Check if user is registered - NOT AVAILABLE IN V3
+export async function isUserRegistered(_userAddress: string): Promise<boolean> {
+  console.warn('isUserRegistered is not available in MessagingContractV3Simple')
+  // In V3, users don't need to register - return true
+  return true
 }
 
-// Get total message count
+// Get total message count - V3 VERSION
 export async function getTotalMessageCount(): Promise<number> {
   try {
     const contract = await getContractReadOnly()
-    const count = await contract.getTotalMessageCount()
-    return Number(count)
+    const stats = await contract.getContractStats()
+    return Number(stats[0]) // totalMessages is the first return value
   } catch (error: any) {
     console.error('Failed to get total message count:', error)
     return 0
