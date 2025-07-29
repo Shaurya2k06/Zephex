@@ -49,7 +49,7 @@ function WalletConnect() {
             ZEPHEX!
           </ComicText>
           <div className="text-lg font-bold text-gray-700 transform -skew-x-12 bg-yellow-200 px-4 py-2 rounded-lg border-2 border-black animate-pulse-glow">
-             Epic Messaging Platform!
+             Epic Messaging Platform
           </div>
         </div>
         
@@ -63,19 +63,19 @@ function WalletConnect() {
               CONNECTING <ComicLoader />
             </span>
           ) : (
-            'CONNECT METAMASK!'
+            'CONNECT METAMASK'
           )}
         </button>
     
         {error && (
           <div className="mt-4 p-4 bg-red-100 border-4 border-red-500 rounded-2xl text-red-700 font-bold transform -skew-x-3 shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] animate-shake">
-            OOPS! {error}
+            ERROR: {error}
           </div>
         )}
         
         <div className="mt-6 text-center">
           <div className="inline-block bg-purple-200 px-4 py-2 rounded-xl border-2 border-purple-700 transform skew-x-6">
-            <span className="text-purple-800 font-bold text-sm">Ready to chat? Connect now!</span>
+            <span className="text-purple-800 font-bold text-sm">Ready to chat? Connect now</span>
           </div>
         </div>
       </div>

@@ -11,7 +11,9 @@ A decentralized, censorship-resistant, privacy-focused messaging application whe
 - **Wallet Authentication**: MetaMask integration for seamless login
 - **Decentralized**: No central servers or authorities
 - **Privacy-First**: Only sender and recipient can decrypt messages
-- **Simple UI**: Clean, fast interface without heavy animations
+- **Comic-Style UI**: Fun, engaging interface with comic book aesthetics
+- **Landing Page**: Beautiful introduction screen
+- **Responsive Design**: Works on desktop and mobile
 
 ## 🛠 Tech Stack
 
@@ -20,6 +22,7 @@ A decentralized, censorship-resistant, privacy-focused messaging application whe
 - **TailwindCSS** - Utility-first CSS framework
 - **Ethers.js** - Web3 wallet interaction
 - **MetaMask** - Wallet connection and encryption
+- **Magic UI Components** - Comic text and dot pattern effects
 
 ### Smart Contracts
 - **Solidity ^0.8.28** - Smart contract language
@@ -62,10 +65,11 @@ npx hardhat run scripts/deploy-messaging.ts --network sepolia
 
 ## 📱 How to Use
 
-1. **Connect Wallet**: Click "Connect MetaMask" to authenticate
-2. **Send Messages**: Enter recipient address and message content  
-3. **View Messages**: All your encrypted messages in the Messages tab
-4. **Settings**: Manage wallet connection and preferences
+1. **Landing Page**: View the introduction and click "Get Started"
+2. **Connect Wallet**: Click "Connect MetaMask" to authenticate
+3. **Chat Application**: Access the main messaging interface
+4. **Send Messages**: Enter recipient address and message content
+5. **View Messages**: All your encrypted messages in the chat interface
 
 ## 🔒 Security Features
 
@@ -77,6 +81,26 @@ npx hardhat run scripts/deploy-messaging.ts --network sepolia
 
 ## 🏗 Architecture
 
+### Frontend Structure
+```
+App.tsx                     # Main application with routing logic
+├── contexts/           
+│   └── WalletContext      # Wallet connection management
+├── components/
+│   ├── LandingScreen      # Introduction/welcome page
+│   ├── ChatApplication    # Main messaging interface
+│   └── magicui/           # Comic text and visual effects
+│       ├── comic-text     # Comic book style text
+│       └── dot-pattern    # Animated background pattern
+└── App.css               # Global styles and animations
+```
+
+### Application Flow
+1. **Landing Screen** - Welcome page with "Get Started" button
+2. **Wallet Connection** - MetaMask connection with comic-style UI
+3. **Loading State** - Shows connecting status with back option
+4. **Chat Application** - Main messaging interface (when connected)
+
 ### Smart Contract (`MessagingContract.sol`)
 ```solidity
 - sendMessage(address to, string encryptedContent, string nonce)
@@ -85,22 +109,21 @@ npx hardhat run scripts/deploy-messaging.ts --network sepolia
 - Owner controls and emergency pause
 ```
 
-### Frontend Components
-```
-App.tsx                 # Main application with routing
-├── contexts/           
-│   ├── WalletContext   # Wallet connection management
-│   └── MessageContext  # Message state management  
-├── components/
-│   ├── layout/         # Header, Sidebar, Layout
-│   ├── wallet/         # WalletConnect component
-│   ├── ui/             # Reusable UI components
-│   └── messaging/      # Message-related components
-└── pages/
-    ├── Dashboard       # Overview and statistics
-    ├── Messages        # Send/receive messages
-    └── Settings        # User preferences
-```
+## 🎨 UI Features
+
+### Comic Book Aesthetics
+- **Comic Text Component**: Stylized comic book fonts
+- **Dot Pattern Background**: Animated halftone patterns
+- **Bold Colors**: Vibrant gradients and high contrast
+- **Floating Elements**: Animated decorative shapes
+- **Retro Shadows**: Bold drop shadows and borders
+
+### Animations
+- **Bounce Effects**: Loading spinners and decorative elements
+- **Hover Animations**: Scale and shadow effects
+- **Pulse Glows**: Attention-grabbing button effects
+- **Float Animation**: Subtle floating movement
+- **Shake Animation**: Error state feedback
 
 ## 🧪 Testing
 
@@ -116,7 +139,8 @@ npx hardhat test
 
 ### Test Coverage
 - ✅ Wallet connection/disconnection
-- ✅ Message encryption/decryption
+- ✅ Landing page navigation
+- ✅ Loading states and error handling
 - ✅ Smart contract deployment
 - ✅ Message sending/receiving
 - ✅ Rate limiting
@@ -141,20 +165,23 @@ ETHERSCAN_API_KEY=your_etherscan_key
 ## 🚧 Current Status
 
 ### ✅ Working Features
-- Wallet connection with MetaMask
-- Simple, clean UI (animations removed)
-- Message sending/receiving (demo mode)
-- Dashboard with statistics
-- Settings page with wallet management
-- Responsive design
+- Complete landing page with comic aesthetics
+- Wallet connection with MetaMask integration
+- Comic-style UI with animations and effects
+- Responsive design for all screen sizes
+- Loading states and error handling
+- Proper navigation flow between screens
+- WalletContext for state management
 
 ### 🔄 In Progress  
+- ChatApplication component implementation
 - Blockchain integration (smart contract connection)
 - Real encryption/decryption
 - Message history from blockchain
 - Gas optimization
 
 ### 📋 TODO
+- Complete messaging functionality
 - IPFS integration for message attachments
 - ENS name resolution
 - Group messaging
@@ -163,19 +190,22 @@ ETHERSCAN_API_KEY=your_etherscan_key
 
 ## 🐛 Known Issues
 
-- Messages currently stored in localStorage (demo mode)
+- ChatApplication component needs full implementation
 - Need to connect frontend to deployed smart contract
 - Encryption implementation pending
 - Gas fee estimation needed
+- Back button from connecting state returns to landing
 
 ## 📞 Development
 
 ### Local Development
 ```bash
 # Start frontend
+cd frontend
 npm run dev
 
-# Start local hardhat node
+# Start local hardhat node (in contracts directory)
+cd contracts
 npx hardhat node
 
 # Deploy to local network
@@ -193,6 +223,23 @@ npx hardhat test
 # Deploy and verify
 npx hardhat run scripts/deploy-messaging.ts --network sepolia
 ```
+
+## 🎯 Next Steps
+
+1. **Complete ChatApplication Component**
+   - Message input and display
+   - Contact management
+   - Message history
+
+2. **Integrate Smart Contracts**
+   - Connect to deployed contract
+   - Implement encryption/decryption
+   - Handle blockchain transactions
+
+3. **Enhanced Features**
+   - Message attachments
+   - Group chats
+   - User profiles
 
 ## 🤝 Contributing
 

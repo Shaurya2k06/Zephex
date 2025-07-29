@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '../utils/constants';
 import { ipfsService } from './ipfsService';
-import { encryptionService } from './encryptionServiceV2';
+import { eciesEncryption } from './eciesEncryption';
 
 // Import ABIs - we'll use simple ABI arrays for now
 const MessagingV3ABI = [
@@ -127,19 +127,19 @@ export class MessageServiceV3 {
       const signer = await this.provider.getSigner();
       const messagingWithSigner = this.messagingContract.connect(signer) as any;
 
-      // 1. Initialize encryption if needed
-      await encryptionService.initializeUserKeys();
+      // 1. Initialize ECIES encryption
+      await eciesEncryption.initializeUserKeys();
 
-      // 2. Get recipient's public key (mock for now - in production, this would be stored on-chain or shared)
-      const recipientPublicKey = encryptionService.generateMockPublicKey(to);
+      // 2. Get recipient's public key (generate from address for demo)
+      const recipientPublicKey = eciesEncryption.generatePublicKeyFromAddress(to);
 
-      // 3. Encrypt the message
-      const encryptionResult = await encryptionService.encryptMessage(content, recipientPublicKey);
+      // 3. Encrypt the message with ECIES
+      const encryptionResult = await eciesEncryption.encryptMessage(content, recipientPublicKey);
       
       // 4. Upload encrypted message to IPFS
       const ipfsResult = await ipfsService.uploadContent(JSON.stringify(encryptionResult));
       
-      console.log(`Message encrypted and uploaded to IPFS: ${ipfsResult.cid}`);
+      console.log(`Message encrypted with ECIES and uploaded to IPFS: ${ipfsResult.cid}`);
 
       // 5. Send transaction with IPFS CID
       const tx = await messagingWithSigner.sendMessage(to, ipfsResult.cid);
@@ -195,14 +195,14 @@ export class MessageServiceV3 {
         return '[Message not found on IPFS]';
       }
 
-      // 2. Parse encryption result
+      // 2. Parse ECIES encryption result
       const encryptionResult = JSON.parse(encryptedDataString);
 
-      // 3. Get sender's public key (mock for now)
-      const senderPublicKey = encryptionService.generateMockPublicKey(message.sender);
+      // 3. Initialize ECIES if needed
+      await eciesEncryption.initializeUserKeys();
 
-      // 4. Decrypt the message
-      const decryptedContent = await encryptionService.decryptMessage(encryptionResult, senderPublicKey);
+      // 4. Decrypt the message using ECIES
+      const decryptedContent = await eciesEncryption.decryptMessage(encryptionResult);
       
       return decryptedContent;
     } catch (error) {

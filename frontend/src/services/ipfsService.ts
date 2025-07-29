@@ -1,5 +1,7 @@
 // IPFS Service for Zephex Messaging
-// This provides a mock implementation that can be replaced with real IPFS integration
+// Uses Pinata for real IPFS with mock fallback
+
+import { pinataIPFS } from './pinataIPFS';
 
 interface IPFSUploadResult {
   cid: string;
@@ -29,46 +31,80 @@ export class IPFSService {
   }
 
   /**
-   * Upload encrypted content to IPFS (mock implementation)
-   * In production, this would use real IPFS nodes
+   * Upload encrypted content to IPFS (uses Pinata with mock fallback)
    */
   async uploadContent(content: string): Promise<IPFSUploadResult> {
     try {
-      // Simulate IPFS upload delay
-      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      // Try Pinata first for real IPFS
+      try {
+        console.log('Attempting to upload to Pinata IPFS...');
+        const result = await pinataIPFS.uploadContent(content);
+        
+        // Also store in mock storage as backup
+        this.mockStorage.set(result.cid, {
+          content,
+          timestamp: Date.now(),
+          encrypted: true
+        });
+        this.persistToLocalStorage();
+        
+        return result;
+      } catch (pinataError) {
+        console.warn('Pinata upload failed, using mock IPFS:', pinataError);
+        
+        // Fall back to mock implementation with shorter CID
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Generate a mock CID (Content Identifier)
-      const cid = this.generateMockCID(content);
-      
-      // Store content in mock storage
-      this.mockStorage.set(cid, {
-        content,
-        timestamp: Date.now(),
-        encrypted: true
-      });
+        const cid = this.generateMockCID(content);
+        
+        this.mockStorage.set(cid, {
+          content,
+          timestamp: Date.now(),
+          encrypted: true
+        });
 
-      // Persist to localStorage for demo purposes
-      this.persistToLocalStorage();
+        this.persistToLocalStorage();
 
-      return {
-        cid,
-        size: new Blob([content]).size
-      };
+        console.log(`Mock IPFS upload completed: ${cid}`);
+
+        return {
+          cid,
+          size: new Blob([content]).size
+        };
+      }
     } catch (error) {
       throw new Error(`Failed to upload to IPFS: ${error}`);
     }
   }
 
   /**
-   * Retrieve content from IPFS by CID (mock implementation)
+   * Retrieve content from IPFS by CID (uses Pinata with mock fallback)
    */
   async getContent(cid: string): Promise<string | null> {
     try {
-      // Simulate IPFS retrieval delay
-      await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 500));
+      // Try Pinata first
+      try {
+        console.log(`Attempting to retrieve from Pinata: ${cid}`);
+        const content = await pinataIPFS.getContent(cid);
+        if (content) {
+          return content;
+        }
+      } catch (pinataError) {
+        console.warn('Pinata retrieval failed, using mock storage:', pinataError);
+      }
+
+      // Fall back to mock storage
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const stored = this.mockStorage.get(cid);
-      return stored ? stored.content : null;
+      
+      if (stored) {
+        console.log(`Mock IPFS retrieval successful: ${cid}`);
+        return stored.content;
+      }
+      
+      console.warn(`Content not found: ${cid}`);
+      return null;
     } catch (error) {
       console.error(`Failed to retrieve from IPFS: ${error}`);
       return null;
@@ -124,7 +160,7 @@ export class IPFSService {
   }
 
   /**
-   * Generate a mock IPFS CID
+   * Generate a mock IPFS CID (shorter format for contract compatibility)
    */
   private generateMockCID(content: string): string {
     // Create a simple hash of the content for consistency
@@ -135,12 +171,16 @@ export class IPFSService {
       hash = hash & hash; // Convert to 32-bit integer
     }
     
-    // Add timestamp to ensure uniqueness
-    const timestamp = Date.now().toString(36);
+    // Add timestamp to ensure uniqueness but keep it short
+    const timestamp = Date.now().toString(36).substring(-6); // Last 6 chars
     const hashStr = Math.abs(hash).toString(36);
     
-    // Format as IPFS CID (simplified)
-    return `Qm${hashStr}${timestamp}${'x'.repeat(Math.max(0, 40 - hashStr.length - timestamp.length))}`;
+    // Format as IPFS CID v1 (shorter format)
+    // Real IPFS CIDs are typically 46-59 characters
+    const cid = `Qm${hashStr}${timestamp}${Math.random().toString(36).substring(2, 8)}`;
+    
+    // Ensure it's under 200 characters (contract limit)
+    return cid.substring(0, 46); // Standard IPFS CID length
   }
 
   /**

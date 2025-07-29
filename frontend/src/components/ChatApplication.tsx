@@ -61,13 +61,13 @@ export function ChatApplication() {
                   onClick={() => setShowWallet(true)}
                   className="px-3 py-1 text-sm font-bold bg-blue-200 text-blue-800 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform hover:-translate-y-0.5 transition-all"
                 >
-                  💰 WALLET
+                  WALLET
                 </button>
                 <button
                   onClick={handleDisconnect}
                   className="px-3 py-1 text-sm font-bold bg-red-300 text-red-800 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform hover:-translate-y-0.5 transition-all"
                 >
-                  🚪 EXIT
+                  EXIT
                 </button>
               </div>
             </div>
@@ -76,7 +76,7 @@ export function ChatApplication() {
             <div className="p-4 border-b-2 border-black bg-gradient-to-r from-indigo-200 to-pink-200">
               <div className="bg-white/80 p-3 rounded-xl border-2 border-black transform skew-x-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                 <div className="transform -skew-x-2">
-                  <div className="text-xs font-bold text-indigo-700">🧙‍♂️ PLAYER:</div>
+                  <div className="text-xs font-bold text-indigo-700">PLAYER:</div>
                   <div className="text-sm font-mono font-bold text-indigo-900">
                     {formatAddress(user?.address)}
                   </div>
