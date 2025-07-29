@@ -1,5 +1,7 @@
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '../utils/constants';
+import { ipfsService } from './ipfsService';
+import { encryptionService } from './encryptionServiceV2';
 
 // Import ABIs - we'll use simple ABI arrays for now
 const MessagingV3ABI = [
@@ -38,11 +40,9 @@ export class MessageServiceV3 {
   private provider: ethers.BrowserProvider;
   private messagingContract: ethers.Contract;
   private walletContract: ethers.Contract;
-  private chainId: number;
 
   constructor(provider: ethers.BrowserProvider, chainId: number) {
     this.provider = provider;
-    this.chainId = chainId;
     
     const addresses = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES];
     if (!addresses) {
@@ -67,7 +67,7 @@ export class MessageServiceV3 {
    */
   async deposit(amountEth: string): Promise<string> {
     const signer = await this.provider.getSigner();
-    const walletWithSigner = this.walletContract.connect(signer);
+    const walletWithSigner = this.walletContract.connect(signer) as any;
     
     const amountWei = ethers.parseEther(amountEth);
     const tx = await walletWithSigner.deposit({ value: amountWei });
@@ -80,7 +80,7 @@ export class MessageServiceV3 {
    */
   async withdraw(amountEth: string): Promise<string> {
     const signer = await this.provider.getSigner();
-    const walletWithSigner = this.walletContract.connect(signer);
+    const walletWithSigner = this.walletContract.connect(signer) as any;
     
     const amountWei = ethers.parseEther(amountEth);
     const tx = await walletWithSigner.withdraw(amountWei);
@@ -120,84 +120,29 @@ export class MessageServiceV3 {
   }
 
   /**
-   * Encrypt message content
-   */
-  private async encryptMessage(content: string, recipientAddress: string): Promise<string> {
-    // For now, we'll use a simple base64 encoding
-    // In production, you'd want to use proper encryption with recipient's public key
-    const messageData: EncryptedMessage = {
-      content,
-      timestamp: Date.now(),
-      from: await (await this.provider.getSigner()).getAddress(),
-      to: recipientAddress
-    };
-
-    return btoa(JSON.stringify(messageData));
-  }
-
-  /**
-   * Decrypt message content
-   */
-  private decryptMessage(encryptedContent: string): EncryptedMessage {
-    try {
-      return JSON.parse(atob(encryptedContent));
-    } catch (error) {
-      throw new Error('Failed to decrypt message');
-    }
-  }
-
-  /**
-   * Upload content to IPFS (mock implementation)
-   */
-  private async uploadToIPFS(content: string): Promise<string> {
-    // This is a mock implementation
-    // In production, you'd use a real IPFS service like Pinata, Infura IPFS, or local IPFS node
-    
-    // For now, we'll simulate IPFS by creating a hash-like CID
-    const encoder = new TextEncoder();
-    const data = encoder.encode(content);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-    
-    // Simulate IPFS CID format
-    return `Qm${hashHex.substring(0, 44)}`;
-  }
-
-  /**
-   * Retrieve content from IPFS (mock implementation)
-   */
-  private async retrieveFromIPFS(cid: string): Promise<string> {
-    // This is a mock implementation
-    // In production, you'd retrieve from actual IPFS
-    
-    // For demo purposes, we'll store the content in localStorage with the CID as key
-    const stored = localStorage.getItem(`ipfs_${cid}`);
-    if (!stored) {
-      throw new Error('Content not found in IPFS');
-    }
-    return stored;
-  }
-
-  /**
    * Send a message
    */
   async sendMessage(to: string, content: string): Promise<string> {
     try {
       const signer = await this.provider.getSigner();
-      const messagingWithSigner = this.messagingContract.connect(signer);
+      const messagingWithSigner = this.messagingContract.connect(signer) as any;
 
-      // 1. Encrypt the message
-      const encryptedContent = await this.encryptMessage(content, to);
+      // 1. Initialize encryption if needed
+      await encryptionService.initializeUserKeys();
 
-      // 2. Upload to IPFS
-      const cid = await this.uploadToIPFS(encryptedContent);
+      // 2. Get recipient's public key (mock for now - in production, this would be stored on-chain or shared)
+      const recipientPublicKey = encryptionService.generateMockPublicKey(to);
+
+      // 3. Encrypt the message
+      const encryptionResult = await encryptionService.encryptMessage(content, recipientPublicKey);
       
-      // Store in localStorage for demo (in production, this would be on IPFS)
-      localStorage.setItem(`ipfs_${cid}`, encryptedContent);
+      // 4. Upload encrypted message to IPFS
+      const ipfsResult = await ipfsService.uploadContent(JSON.stringify(encryptionResult));
+      
+      console.log(`Message encrypted and uploaded to IPFS: ${ipfsResult.cid}`);
 
-      // 3. Send transaction
-      const tx = await messagingWithSigner.sendMessage(to, cid);
+      // 5. Send transaction with IPFS CID
+      const tx = await messagingWithSigner.sendMessage(to, ipfsResult.cid);
       
       return tx.hash;
     } catch (error) {
@@ -243,13 +188,23 @@ export class MessageServiceV3 {
    */
   async getMessageContent(message: MessageV3): Promise<string> {
     try {
-      // 1. Retrieve from IPFS
-      const encryptedContent = await this.retrieveFromIPFS(message.cid);
+      // 1. Retrieve encrypted content from IPFS
+      const encryptedDataString = await ipfsService.getContent(message.cid);
       
-      // 2. Decrypt content
-      const decrypted = this.decryptMessage(encryptedContent);
+      if (!encryptedDataString) {
+        return '[Message not found on IPFS]';
+      }
+
+      // 2. Parse encryption result
+      const encryptionResult = JSON.parse(encryptedDataString);
+
+      // 3. Get sender's public key (mock for now)
+      const senderPublicKey = encryptionService.generateMockPublicKey(message.sender);
+
+      // 4. Decrypt the message
+      const decryptedContent = await encryptionService.decryptMessage(encryptionResult, senderPublicKey);
       
-      return decrypted.content;
+      return decryptedContent;
     } catch (error) {
       console.error('Failed to get message content:', error);
       return '[Message could not be decrypted]';

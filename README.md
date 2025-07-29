@@ -147,7 +147,6 @@ ETHERSCAN_API_KEY=your_etherscan_key
 - Dashboard with statistics
 - Settings page with wallet management
 - Responsive design
-- Dark theme only
 
 ### 🔄 In Progress  
 - Blockchain integration (smart contract connection)
